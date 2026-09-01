@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>泰国收支估算系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- 内联数据区 -->
+    <script>
+        const initialData = {
+            production: {
+                label: "月产量（吨）",
+                value: 200
+            },
+            material_usage: {
+                label: "材料用量（吨）",
+                value: 1800
+            },
+            material_price: {
+                label: "材料单价（USD）",
+                value: 5
+            },
+            exchange_rate: 7.8,
+            scenarios: [
+                {
+                    id: "scenario_1",
+                    name: "核算A",
+                    price_per_ton: 500,
+                    other_income: 0
+                },
+                {
+                    id: "scenario_2",
+                    name: "核算B",
+                    price_per_ton: 400,
+                    other_income: 0
+                }
+            ],
+            expenses: [
+                {
+                    id: "expense_1",
+                    label: "租金（HKD）",
+                    value: 35000
+                },
+                {
+                    id: "expense_2",
+                    label: "电费（HKD）",
+                    value: 200000
+                },
+                {
+                    id: "expense_3",
+                    label: "人工支出（HKD）",
+                    value: 130000
+                },
+                {
+                    id: "expense_4",
+                    label: "包装物料费（HKD）",
+                    value: 120000
+                },
+                {
+                    id: "expense_5",
+                    label: "运输（HKD）",
+                    value: 20000
+                },
+                {
+                    id: "expense_6",
+                    label: "软件费（HKD）",
+                    value: 5000
+                },
+                {
+                    id: "expense_7",
+                    label: "什项（HKD）",
+                    value: 20000
+                }
+            ]
+        };
+    </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6 max-w-6xl">
+        <!-- 标题区域 -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-calculator text-blue-600 mr-3"></i>
+                泰国收支估算系统
+            </h1>
+            <p class="text-gray-600 text-lg">移动友好的收支分析与预测工具</p>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- 左侧：数据输入区域 -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- 基础数据卡片 -->
+                <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-database text-green-600 mr-2"></i>
+                        基础数据
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">月产量（吨）</label>
+                            <input type="number" id="production" value="200" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">材料用量（吨）</label>
+                            <input type="number" id="material_usage" value="1800" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">材料单价（USD）</label>
+                            <input type="number" id="material_price" value="5" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">汇率（USD to HKD）</label>
+                            <input type="number" id="exchange_rate" value="7.8" step="0.01" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 核算方案卡片 -->
+                <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-chart-line text-blue-600 mr-2"></i>
+                            核算方案
+                        </h2>
+                        <button id="add_scenario" class="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-700 transition-all">
+                            <i class="fas fa-plus mr-2"></i>添加方案
+                        </button>
+                    </div>
+                    <div id="scenarios_container" class="space-y-4">
+                        <!-- 核算方案将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 支出明细卡片 -->
+                <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-list-alt text-red-600 mr-2"></i>
+                            支出明细
+                        </h2>
+                        <button id="add_expense" class="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-green-700 transition-all">
+                            <i class="fas fa-plus mr-2"></i>添加支出
+                        </button>
+                    </div>
+                    <div id="expenses_container" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                        <!-- 支出项目将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：结果展示区域 -->
+            <div class="space-y-6">
+                
+                <!-- 计算结果卡片 -->
+                <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-calculator text-purple-600 mr-2"></i>
+                        计算结果
+                    </h2>
+                    <div id="results_container" class="space-y-4">
+                        <!-- 计算结果将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 图表展示卡片 -->
+                <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-chart-pie text-orange-600 mr-2"></i>
+                        支出结构分析
+                    </h2>
+                    <div class="h-64">
+                        <canvas id="expenses_chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 方案对比卡片 -->
+                <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-chart-bar text-teal-600 mr-2"></i>
+                        方案对比
+                    </h2>
+                    <div class="h-64">
+                        <canvas id="scenarios_chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="flex space-x-3">
+                    <button id="export_excel" class="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg flex items-center justify-center hover:bg-blue-700 transition-all">
+                        <i class="fas fa-file-excel mr-2"></i>导出Excel
+                    </button>
+                    <button id="reset_data" class="flex-1 bg-gray-600 text-white px-4 py-3 rounded-lg flex items-center justify-center hover:bg-gray-700 transition-all">
+                        <i class="fas fa-redo mr-2"></i>重置
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部信息 -->
+        <div class="text-center mt-8 text-gray-500 text-sm">
+            <p>© 2024 泰国收支估算系统 | 移动端友好设计</p>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentData = JSON.parse(JSON.stringify(initialData));
+        let expensesChart = null;
+        let scenariosChart = null;
+
+        // 初始化应用
+        function initApp() {
+            renderScenarios();
+            renderExpenses();
+            updateCalculations();
+            initCharts();
+            setupEventListeners();
+        }
+
+        // 渲染核算方案
+        function renderScenarios() {
+            const container = document.getElementById('scenarios_container');
+            container.innerHTML = '';
+
+            currentData.scenarios.forEach((scenario, index) => {
+                const scenarioDiv = document.createElement('div');
+                scenarioDiv.className = 'bg-gray-50 p-4 rounded-lg border border-gray-200';
+                scenarioDiv.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-semibold text-gray-800">${scenario.name}</h3>
+                        <button class="delete_scenario text-red-500 hover:text-red-700" data-id="${scenario.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">每吨售价（USD）</label>
+                            <input type="number" class="price_per_ton w-full px-3 py-1.5 text-sm border border-gray-300 rounded" 
+                                data-id="${scenario.id}" value="${scenario.price_per_ton}">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">其他收入（HKD）</label>
+                            <input type="number" class="other_income w-full px-3 py-1.5 text-sm border border-gray-300 rounded" 
+                                data-id="${scenario.id}" value="${scenario.other_income}">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(scenarioDiv);
+            });
+        }
+
+        // 渲染支出项目
+        function renderExpenses() {
+            const container = document.getElementById('expenses_container');
+            container.innerHTML = '';
+
+            currentData.expenses.forEach((expense) => {
+                const expenseDiv = document.createElement('div');
+                expenseDiv.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200';
+                expenseDiv.innerHTML = `
+                    <div class="flex-1">
+                        <input type="text" class="expense_label w-full px-3 py-1.5 text-sm border border-gray-300 rounded mb-1" 
+                            data-id="${expense.id}" value="${expense.label}">
+                        <input type="number" class="expense_value w-full px-3 py-1.5 text-sm border border-gray-300 rounded" 
+                            data-id="${expense.id}" value="${expense.value}">
+                    </div>
+                    <button class="delete_expense text-red-500 hover:text-red-700 ml-2" data-id="${expense.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                container.appendChild(expenseDiv);
+            });
+        }
+
+        // 更新计算结果
+        function updateCalculations() {
+            const resultsContainer = document.getElementById('results_container');
+            resultsContainer.innerHTML = '';
+
+            // 获取基础数据
+            const production = parseFloat(document.getElementById('production').value) || 0;
+            const materialUsage = parseFloat(document.getElementById('material_usage').value) || 0;
+            const materialPrice = parseFloat(document.getElementById('material_price').value) || 0;
+            const exchangeRate = parseFloat(document.getElementById('exchange_rate').value) || 7.8;
+
+            // 计算材料成本
+            const materialCostUSD = materialUsage * materialPrice;
+            const materialCostHKD = materialCostUSD * exchangeRate;
+
+            // 计算总支出
+            let totalExpenses = materialCostHKD;
+            currentData.expenses.forEach(expense => {
+                totalExpenses += parseFloat(expense.value) || 0;
+            });
+
+            // 为每个方案计算结果
+            currentData.scenarios.forEach((scenario, index) => {
+                const pricePerTon = parseFloat(scenario.price_per_ton) || 0;
+                const otherIncome = parseFloat(scenario.other_income) || 0;
+
+                // 计算收入
+                const salesUSD = production * pricePerTon;
+                const salesHKD = salesUSD * exchangeRate;
+                const totalIncome = salesHKD + otherIncome;
+
+                // 计算净利润
+                const netProfit = totalIncome - totalExpenses;
+
+                // 创建结果卡片
+                const resultCard = document.createElement('div');
+                resultCard.className = `p-4 rounded-lg ${index % 2 === 0 ? 'bg-blue-50' : 'bg-indigo-50'}`;
+                resultCard.innerHTML = `
+                    <h3 class="font-bold text-gray-800 mb-3">${scenario.name}</h3>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div class="text-gray-600">销售收入(USD):</div>
+                        <div class="font-medium">USD ${salesUSD.toLocaleString()}</div>
+                        <div class="text-gray-600">销售收入(HKD):</div>
+                        <div class="font-medium">HKD ${salesHKD.toLocaleString()}</div>
+                        <div class="text-gray-600">其他收入(HKD):</div>
+                        <div class="font-medium">HKD ${otherIncome.toLocaleString()}</div>
+                        <div class="text-gray-600">月度总收入:</div>
+                        <div class="font-medium text-green-600">HKD ${totalIncome.toLocaleString()}</div>
+                        <div class="text-gray-600">月度总支出:</div>
+                        <div class="font-medium text-red-600">HKD ${totalExpenses.toLocaleString()}</div>
+                        <div class="text-gray-600 font-bold">净利润:</div>
+                        <div class="font-bold text-lg ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}">
+                            HKD ${netProfit.toLocaleString()}
+                        </div>
+                    </div>
+                `;
+                resultsContainer.appendChild(resultCard);
+            });
+
+            // 更新图表
+            updateCharts();
+        }
+
+        // 初始化图表
+        function initCharts() {
+            // 支出结构饼图
+            const expensesCtx = document.getElementById('expenses_chart').getContext('2d');
+            expensesChart = new Chart(expensesCtx, {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                            '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 10,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 方案对比柱状图
+            const scenariosCtx = document.getElementById('scenarios_chart').getContext('2d');
+            scenariosChart = new Chart(scenariosCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '总收入 (HKD)',
+                        data: [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: '总支出 (HKD)',
+                        data: [],
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: '净利润 (HKD)',
+                        data: [],
+                        backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'HKD ' + (value / 1000).toFixed(0) + 'K';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 10,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            updateCharts();
+        }
+
+        // 更新图表数据
+        function updateCharts() {
+            // 获取基础数据
+            const production = parseFloat(document.getElementById('production').value) || 0;
+            const materialUsage = parseFloat(document.getElementById('material_usage').value) || 0;
+            const materialPrice = parseFloat(document.getElementById('material_price').value) || 0;
+            const exchangeRate = parseFloat(document.getElementById('exchange_rate').value) || 7.8;
+
+            // 计算材料成本
+            const materialCostUSD = materialUsage * materialPrice;
+            const materialCostHKD = materialCostUSD * exchangeRate;
+
+            // 准备支出结构数据
+            const expenseLabels = ['材料成本'];
+            const expenseData = [materialCostHKD];
+
+            currentData.expenses.forEach(expense => {
+                expenseLabels.push(expense.label.replace('（HKD）', ''));
+                expenseData.push(parseFloat(expense.value) || 0);
+            });
+
+            // 更新支出饼图
+            expensesChart.data.labels = expenseLabels;
+            expensesChart.data.datasets[0].data = expenseData;
+            expensesChart.update();
+
+            // 准备方案对比数据
+            const scenarioLabels = [];
+            const incomeData = [];
+            const expenseDataAll = [];
+            const profitData = [];
+
+            const totalExpenses = expenseData.reduce((sum, val) => sum + val, 0);
+
+            currentData.scenarios.forEach(scenario => {
+                scenarioLabels.push(scenario.name);
+                const pricePerTon = parseFloat(scenario.price_per_ton) || 0;
+                const otherIncome = parseFloat(scenario.other_income) || 0;
+
+                const salesUSD = production * pricePerTon;
+                const salesHKD = salesUSD * exchangeRate;
+                const totalIncome = salesHKD + otherIncome;
+                const netProfit = totalIncome - totalExpenses;
+
+                incomeData.push(totalIncome);
+                expenseDataAll.push(totalExpenses);
+                profitData.push(netProfit);
+            });
+
+            // 更新方案对比柱状图
+            scenariosChart.data.labels = scenarioLabels;
+            scenariosChart.data.datasets[0].data = incomeData;
+            scenariosChart.data.datasets[1].data = expenseDataAll;
+            scenariosChart.data.datasets[2].data = profitData;
+            scenariosChart.update();
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 基础数据变化监听
+            document.getElementById('production').addEventListener('input', updateCalculations);
+            document.getElementById('material_usage').addEventListener('input', updateCalculations);
+            document.getElementById('material_price').addEventListener('input', updateCalculations);
+            document.getElementById('exchange_rate').addEventListener('input', updateCalculations);
+
+            // 添加核算方案
+            document.getElementById('add_scenario').addEventListener('click', () => {
+                const newScenarioId = `scenario_${Date.now()}`;
+                const newScenario = {
+                    id: newScenarioId,
+                    name: `核算${currentData.scenarios.length + 1}`,
+                    price_per_ton: 450,
+                    other_income: 0
+                };
+                currentData.scenarios.push(newScenario);
+                renderScenarios();
+                setupDynamicEventListeners();
+                updateCalculations();
+            });
+
+            // 添加支出项目
+            document.getElementById('add_expense').addEventListener('click', () => {
+                const newExpenseId = `expense_${Date.now()}`;
+                const newExpense = {
+                    id: newExpenseId,
+                    label: `新支出${currentData.expenses.length + 1}（HKD）`,
+                    value: 0
+                };
+                currentData.expenses.push(newExpense);
+                renderExpenses();
+                setupDynamicEventListeners();
+                updateCalculations();
+            });
+
+            // 重置数据
+            document.getElementById('reset_data').addEventListener('click', () => {
+                if (confirm('确定要重置所有数据吗？')) {
+                    currentData = JSON.parse(JSON.stringify(initialData));
+                    document.getElementById('production').value = currentData.production.value;
+                    document.getElementById('material_usage').value = currentData.material_usage.value;
+                    document.getElementById('material_price').value = currentData.material_price.value;
+                    document.getElementById('exchange_rate').value = currentData.exchange_rate;
+                    
+                    renderScenarios();
+                    renderExpenses();
+                    setupDynamicEventListeners();
+                    updateCalculations();
+                }
+            });
+
+            // 导出Excel（模拟）
+            document.getElementById('export_excel').addEventListener('click', () => {
+                alert('Excel导出功能已触发！实际应用中会生成并下载Excel文件。');
+            });
+
+            // 设置动态生成元素的事件监听
+            setupDynamicEventListeners();
+        }
+
+        // 设置动态生成元素的事件监听
+        function setupDynamicEventListeners() {
+            // 核算方案删除按钮
+            document.querySelectorAll('.delete_scenario').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const scenarioId = e.currentTarget.getAttribute('data-id');
+                    if (currentData.scenarios.length > 1) {
+                        currentData.scenarios = currentData.scenarios.filter(s => s.id !== scenarioId);
+                        renderScenarios();
+                        setupDynamicEventListeners();
+                        updateCalculations();
+                    } else {
+                        alert('至少需要保留一个核算方案');
+                    }
+                });
+            });
+
+            // 核算方案数据变化
+            document.querySelectorAll('.price_per_ton').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const scenarioId = e.currentTarget.getAttribute('data-id');
+                    const scenario = currentData.scenarios.find(s => s.id === scenarioId);
+                    if (scenario) {
+                        scenario.price_per_ton = parseFloat(e.currentTarget.value) || 0;
+                        updateCalculations();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.other_income').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const scenarioId = e.currentTarget.getAttribute('data-id');
+                    const scenario = currentData.scenarios.find(s => s.id === scenarioId);
+                    if (scenario) {
+                        scenario.other_income = parseFloat(e.currentTarget.value) || 0;
+                        updateCalculations();
+                    }
+                });
+            });
+
+            // 支出项目删除按钮
+            document.querySelectorAll('.delete_expense').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const expenseId = e.currentTarget.getAttribute('data-id');
+                    currentData.expenses = currentData.expenses.filter(e => e.id !== expenseId);
+                    renderExpenses();
+                    setupDynamicEventListeners();
+                    updateCalculations();
+                });
+            });
+
+            // 支出项目数据变化
+            document.querySelectorAll('.expense_label').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const expenseId = e.currentTarget.getAttribute('data-id');
+                    const expense = currentData.expenses.find(e => e.id === expenseId);
+                    if (expense) {
+                        expense.label = e.currentTarget.value;
+                    }
+                });
+            });
+
+            document.querySelectorAll('.expense_value').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const expenseId = e.currentTarget.getAttribute('data-id');
+                    const expense = currentData.expenses.find(e => e.id === expenseId);
+                    if (expense) {
+                        expense.value = parseFloat(e.currentTarget.value) || 0;
+                        updateCalculations();
+                    }
+                });
+            });
+        }
+
+        // 启动应用
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
